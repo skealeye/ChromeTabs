@@ -1,0 +1,1 @@
+python open_guest_tabs.py 20  https://www.costco.com/.product.4000331828.html
