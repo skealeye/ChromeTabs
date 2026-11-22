@@ -3,7 +3,7 @@ const assert = require('node:assert');
 const { normalizeUrl, clampCount } = require('../../src/lib/url');
 
 test('normalizeUrl', () => {
-  assert.strictEqual(normalizeUrl(' costco.com/x '), 'https://costco.com/x');
+  assert.strictEqual(normalizeUrl(' example.com/x '), 'https://example.com/x');
   assert.strictEqual(normalizeUrl('abc def'), null);
   assert.strictEqual(normalizeUrl('abc'), null);
   assert.strictEqual(normalizeUrl('ftp://x.com'), null);

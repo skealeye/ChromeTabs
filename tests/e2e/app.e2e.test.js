@@ -13,7 +13,7 @@ after(async () => {
 });
 
 test('title shows version', async () => {
-  assert.strictEqual(await page.title(), 'ChromeTabs v0.1.1');
+  assert.strictEqual(await page.title(), 'ChromeTabs v0.1.2');
 });
 
 test('bad input shows error and opens nothing', async () => {
