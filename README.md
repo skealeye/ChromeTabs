@@ -17,7 +17,7 @@ replaces the current set with fresh sessions.
 ## Views
 
 - **Grid** shows up to 25 sessions per page. Use ◀ ▶, the page dots, or PgUp/PgDn (from the top bar) to change page.
-- **Tabs** shows one session at a time. Click a number, or use the ⤢ button on any pane.
+- **Tabs** shows one session at a time. Click a number, or use the ⤢ button on any pane; its ⤡ button takes you back to the grid.
 
 ## Keys
 

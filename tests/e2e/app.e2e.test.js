@@ -13,7 +13,7 @@ after(async () => {
 });
 
 test('title shows version', async () => {
-  assert.strictEqual(await page.title(), 'ChromeTabs v0.1.0');
+  assert.strictEqual(await page.title(), 'ChromeTabs v0.1.1');
 });
 
 test('bad input shows error and opens nothing', async () => {
@@ -80,4 +80,18 @@ test('grid pages of 25 without reloading', async () => {
   assert.strictEqual(await inPane(page, 25, 'window.__mark'), 26);
   await page.keyboard.press('PageUp');
   assert.strictEqual(await page.textContent('#page-label'), 'Page 1/2');
+});
+
+test('maximize from grid, then restore returns to the grid on that page', async () => {
+  await page.click('#view-grid');
+  await openPanes(page, `${srv.base}/session.html`, 30);
+  const maxBtn = (i) => page.evaluate((i) => window.CT.panes[i].el.querySelector('.max').click(), i);
+  await maxBtn(26);
+  assert.strictEqual(await page.evaluate(() => window.CT.view()), 'tabs');
+  assert.strictEqual(await page.evaluate(() => window.CT.currentPane()), 26);
+  assert.strictEqual(await page.evaluate(() => window.CT.panes[26].el.querySelector('.max').title), 'Back to grid');
+  await maxBtn(26);
+  assert.strictEqual(await page.evaluate(() => window.CT.view()), 'grid');
+  assert.strictEqual(await page.evaluate(() => window.CT.currentPage()), 1);
+  assert.ok(await page.evaluate(() => window.CT.panes[26].el.classList.contains('shown')));
 });

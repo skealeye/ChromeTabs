@@ -31,8 +31,8 @@
     const reload = el('button', 'icon', '⟳');
     reload.title = 'Reload';
     const urlText = el('span', 'url', url);
-    const max = el('button', 'icon', '⤢');
-    max.title = 'Open in Tabs view';
+    const max = el('button', 'icon max', '⤢');
+    max.title = 'Maximize';
     head.append(num, back, reload, urlText, max);
 
     const webview = document.createElement('webview');
@@ -42,14 +42,15 @@
     webview.setAttribute('src', url);
     root.append(head, webview);
 
-    const pane = { el: root, webview, n, partition, ready: false, attention: false, urlText };
+    const pane = { el: root, webview, n, partition, ready: false, attention: false, urlText, max };
     webview.addEventListener('dom-ready', () => { pane.ready = true; });
     const onNav = (e) => { urlText.textContent = e.url; urlText.title = e.url; };
     webview.addEventListener('did-navigate', onNav);
     webview.addEventListener('did-navigate-in-page', (e) => { if (e.isMainFrame) onNav(e); });
     back.addEventListener('click', () => { if (webview.canGoBack()) webview.goBack(); });
     reload.addEventListener('click', () => webview.reload());
-    max.addEventListener('click', () => { setView('tabs'); selectPane(i); });
+    // Toggle: maximize into Tabs view, or go back to the grid page this pane is on.
+    max.addEventListener('click', () => { setView(view === 'tabs' ? 'grid' : 'tabs'); selectPane(i); });
     head.addEventListener('mousedown', () => { current = i; markCurrent(); });
     webview.addEventListener('focus', () => { current = i; markCurrent(); });
     if (window.CT.onPaneCreated) window.CT.onPaneCreated(pane, i);
@@ -121,6 +122,8 @@
     for (const p of panes) {
       if (!shown.has(p)) place(p, 0, 0, W, H);
       p.el.classList.toggle('shown', shown.has(p));
+      p.max.textContent = view === 'tabs' ? '⤡' : '⤢';
+      p.max.title = view === 'tabs' ? 'Back to grid' : 'Maximize';
     }
     markCurrent();
     renderPager();
