@@ -1,0 +1,16 @@
+{
+  "name": "chrometabs",
+  "version": "0.1.0",
+  "description": "Open many isolated browser sessions of one URL in a single window",
+  "main": "src/main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test \"tests/unit/*.test.js\"",
+    "e2e": "node --test --test-concurrency=1 \"tests/e2e/*.test.js\""
+  },
+  "devDependencies": {
+    "electron": "^45.4.1",
+    "playwright": "^1.65.1"
+  }
+}
