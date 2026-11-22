@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'">
+  <title>ChromeTabs</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header id="bar">
+    <span class="brand">ChromeTabs</span>
+    <input id="url" type="text" placeholder="https://www.costco.com/…" spellcheck="false">
+    <label class="count">× <input id="count" type="number" min="1" max="100" value="20"></label>
+    <button id="open" class="primary">Open</button>
+    <span id="error" hidden>Enter a valid web address</span>
+    <span class="spacer"></span>
+    <button id="attention" class="attention-pill" hidden title="Jump to next (F2)"></button>
+    <nav id="pager" hidden>
+      <button id="prev" title="Previous page (PgUp)">◀</button>
+      <span id="page-label"></span>
+      <span id="page-dots"></span>
+      <button id="next" title="Next page (PgDn)">▶</button>
+    </nav>
+    <div class="seg">
+      <button id="view-grid" class="on">Grid</button>
+      <button id="view-tabs">Tabs</button>
+    </div>
+    <button id="reload-all">Reload all</button>
+    <button id="close-all">Close all</button>
+  </header>
+  <nav id="tabstrip" hidden></nav>
+  <main id="stage">
+    <div id="empty">Enter an address and how many sessions, then press Open.</div>
+  </main>
+  <script src="../lib/url.js"></script>
+  <script src="../lib/grid.js"></script>
+  <script src="../lib/stagger.js"></script>
+  <script src="../lib/attention.js"></script>
+  <script src="renderer.js"></script>
+</body>
+</html>

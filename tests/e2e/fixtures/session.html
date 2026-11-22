@@ -1,0 +1,8 @@
+<!doctype html><html><body>
+<h1 id="state"></h1>
+<script>
+  document.getElementById('state').textContent = localStorage.getItem('seen') ? 'seen' : 'new';
+  localStorage.setItem('seen', '1');
+  document.cookie = 'seen=1; path=/';
+</script>
+</body></html>
