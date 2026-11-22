@@ -1,0 +1,10 @@
+node_modules/
+dist/
+out/
+Thumbs.db
+__pycache__/
+.playwright-mcp/
+*.png
+~RF*.TMP
+.claude/worktrees/
+.env
