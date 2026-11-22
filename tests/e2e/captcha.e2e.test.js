@@ -33,8 +33,9 @@ test('captcha in a hidden pane is flagged, notified, and F2 jumps to it', async 
   assert.ok((await flashes()) > before, 'flash requested');
   assert.ok(!(await page.evaluate(() => window.CT.panes[0].el.classList.contains('attention'))));
 
-  await page.keyboard.press('F2');
-  assert.strictEqual(await page.evaluate(() => window.CT.currentPane()), 2);
+  // F2 pressed while focus is inside pane 1 (routed through main's before-input-event).
+  await page.evaluate(() => window.CT.panes[0].webview.sendInputEvent({ type: 'keyDown', keyCode: 'F2' }));
+  await page.waitForFunction(() => window.CT.currentPane() === 2, null, { timeout: 3000 });
   assert.strictEqual(await page.evaluate(() => window.CT.view()), 'tabs');
 
   await hide(2);

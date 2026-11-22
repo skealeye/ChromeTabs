@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, session } = require('electron');
+const { app, BrowserWindow, ipcMain, Menu, session } = require('electron');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 
@@ -8,6 +8,15 @@ const CLEAN_UA = app.userAgentFallback
   .replace(/\s?chrometabs\/\S+/i, '');
 app.userAgentFallback = CLEAN_UA;
 
+// Panes get no camera/mic/location/notification prompts; only harmless ones pass.
+const ALLOWED_PERMISSIONS = new Set(['fullscreen', 'clipboard-sanitized-write']);
+function lockDownSession(s) {
+  s.setPermissionRequestHandler((_wc, permission, cb) => cb(ALLOWED_PERMISSIONS.has(permission)));
+  s.setPermissionCheckHandler((_wc, permission) => ALLOWED_PERMISSIONS.has(permission));
+}
+app.on('session-created', lockDownSession);
+
+const WEB_URL = /^(https?:|about:blank)/i;
 const PANE_PRELOAD = path.join(__dirname, 'pane-preload.js');
 let win = null;
 
@@ -33,7 +42,9 @@ function createWindow() {
       webviewTag: true,
     },
   });
-  win.setMenuBarVisibility(false);
+  // The app page itself never navigates or opens windows (e.g. a link dropped on the top bar).
+  win.webContents.on('will-navigate', (e) => e.preventDefault());
+  win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   win.on('page-title-updated', (e) => e.preventDefault());
   win.on('focus', () => win.flashFrame(false));
   win.webContents.on('will-attach-webview', (_e, prefs, params) => {
@@ -54,7 +65,16 @@ app.on('web-contents-created', (_e, contents) => {
     if (/^https?:/i.test(url)) contents.loadURL(url);
     return { action: 'deny' };
   });
+  // Only web pages: no mailto:/ms-settings:/custom-scheme launches into desktop apps.
+  const blockNonWeb = (e) => { if (!WEB_URL.test(e.url)) e.preventDefault(); };
+  contents.on('will-navigate', blockNonWeb);
+  contents.on('will-frame-navigate', blockNonWeb);
   contents.on('before-input-event', (event, input) => {
+    if (input.type === 'keyDown' && (input.key === 'F5' || (input.control && input.key.toLowerCase() === 'r'))) {
+      event.preventDefault();
+      contents.reload();
+      return;
+    }
     const key = paneHotkey(input);
     if (key && win) {
       event.preventDefault();
@@ -79,5 +99,10 @@ ipcMain.on('drop-partition', (_e, partition) => {
   }
 });
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  // No default menu: its Ctrl+R / Ctrl+W would reload or close the whole app.
+  Menu.setApplicationMenu(null);
+  lockDownSession(session.defaultSession);
+  createWindow();
+});
 app.on('window-all-closed', () => app.quit());

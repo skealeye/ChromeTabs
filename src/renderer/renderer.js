@@ -10,6 +10,8 @@
   let page = 0;
   let current = 0;
   let openId = 0;
+  // Unique per app-page load, so a reload can never hand out an old session.
+  const launchId = crypto.randomUUID().slice(0, 8);
 
   function el(tag, cls, text) {
     const e = document.createElement(tag);
@@ -20,7 +22,7 @@
 
   function createPane(i, url) {
     const n = i + 1;
-    const partition = `pane-${openId}-${n}`;
+    const partition = `pane-${launchId}-${openId}-${n}`;
     const root = el('div', 'pane');
     const head = el('div', 'pane-head');
     const num = el('span', 'num', String(n));
@@ -178,6 +180,7 @@
     current = i;
     page = pageOf(i);
     layout();
+    panes[i].webview.focus();
   }
 
   function handleHotkey(key) {
