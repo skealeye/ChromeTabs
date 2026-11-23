@@ -13,6 +13,13 @@
     <label class="count">× <input id="count" type="number" min="1" max="100" value="20"></label>
     <button id="open" class="primary">Open</button>
     <span id="error" hidden>Enter a valid web address</span>
+    <div class="assist">
+      <button id="draw" title="Draw a click region on the current session (F3)">✚ Region</button>
+      <button id="clear-regions" title="Remove this session's regions">Clear</button>
+      <button id="assist-toggle" title="Start / stop auto-click (F4)">▶ Auto-click</button>
+      <label class="ms"><input id="assist-ms" type="number" min="150" max="5000" step="10" value="200"> ms</label>
+      <span id="assist-status"></span>
+    </div>
     <span class="spacer"></span>
     <button id="attention" class="attention-pill" hidden title="Jump to next (F2)"></button>
     <button id="through" class="through-pill" hidden title="Jump to next (F2)"></button>
@@ -40,5 +47,6 @@
   <script src="../lib/clicker.js"></script>
   <script src="renderer.js"></script>
   <script src="captcha.js"></script>
+  <script src="assist.js"></script>
 </body>
 </html>

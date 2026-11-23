@@ -19,6 +19,7 @@ app.on('session-created', lockDownSession);
 const WEB_URL = /^(https?:|about:blank)/i;
 const PANE_PRELOAD = path.join(__dirname, 'pane-preload.js');
 let win = null;
+let assisting = false;
 
 function paneHotkey(input) {
   if (input.type !== 'keyDown') return null;
@@ -26,6 +27,10 @@ function paneHotkey(input) {
   if (input.control && !input.alt && /^[1-9]$/.test(k)) return 'ctrl+' + k;
   if (input.control && k === 'Tab') return input.shift ? 'ctrl+shift+tab' : 'ctrl+tab';
   if (k === 'F2') return 'f2';
+  if (k === 'F3') return 'f3';
+  if (k === 'F4') return 'f4';
+  // Esc only stops click assist while it runs; otherwise pages keep their Esc.
+  if (k === 'Escape' && assisting) return 'escape';
   return null;
 }
 
@@ -90,6 +95,7 @@ ipcMain.on('get-info', (e) => {
     panePreload: pathToFileURL(PANE_PRELOAD).href,
   };
 });
+ipcMain.on('assist-state', (_e, on) => { assisting = Boolean(on); });
 ipcMain.on('flash-frame', () => {
   if (win && !win.isFocused()) win.flashFrame(true);
 });

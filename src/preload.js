@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('app', {
   userAgent: info.userAgent,
   panePreload: info.panePreload,
   flash: () => ipcRenderer.send('flash-frame'),
+  setAssisting: (on) => ipcRenderer.send('assist-state', Boolean(on)),
   dropPartition: (p) => ipcRenderer.send('drop-partition', p),
   onHotkey: (cb) => ipcRenderer.on('hotkey', (_e, key) => cb(key)),
 });

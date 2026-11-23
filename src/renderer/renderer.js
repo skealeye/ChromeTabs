@@ -51,9 +51,8 @@
     reload.addEventListener('click', () => webview.reload());
     // Toggle: maximize into Tabs view, or go back to the grid page this pane is on.
     max.addEventListener('click', () => { setView(view === 'tabs' ? 'grid' : 'tabs'); selectPane(i); });
-    const touch = () => { current = i; markCurrent(); if (window.CT.onSelect) window.CT.onSelect(pane); };
-    head.addEventListener('mousedown', touch);
-    webview.addEventListener('focus', touch);
+    head.addEventListener('mousedown', () => { current = i; markCurrent(); if (window.CT.onSelect) window.CT.onSelect(pane); });
+    webview.addEventListener('focus', () => { current = i; markCurrent(); });
     if (window.CT.onPaneCreated) window.CT.onPaneCreated(pane, i);
     return pane;
   }
@@ -192,11 +191,13 @@
 
   function handleHotkey(key) {
     if (!panes.length) return;
+    if (key === 'f3' || key === 'f4' || key === 'escape') return window.CT.onKey && window.CT.onKey(key);
     const m = /^ctrl\+([1-9])$/.exec(key);
     if (m) return selectPane(Number(m[1]) - 1);
     if (key === 'ctrl+tab') return selectPane((current + 1) % panes.length);
     if (key === 'ctrl+shift+tab') return selectPane((current - 1 + panes.length) % panes.length);
     if (key === 'f2' && window.CT.onF2) return window.CT.onF2();
+    if (window.CT.onKey) return window.CT.onKey(key);
   }
 
   window.CT = {
@@ -210,6 +211,7 @@
     onPanesChanged: null,
     onF2: null,
     onSelect: null,
+    onKey: null,
   };
 
   document.title = `ChromeTabs v${window.app.version}`;
@@ -236,6 +238,9 @@
     if (e.ctrlKey && /^[1-9]$/.test(e.key)) key = 'ctrl+' + e.key;
     else if (e.ctrlKey && e.key === 'Tab') key = e.shiftKey ? 'ctrl+shift+tab' : 'ctrl+tab';
     else if (e.key === 'F2') key = 'f2';
+    else if (e.key === 'F3') key = 'f3';
+    else if (e.key === 'F4') key = 'f4';
+    else if (e.key === 'Escape') key = 'escape';
     if (key) { e.preventDefault(); handleHotkey(key); }
   });
   window.app.onHotkey(handleHotkey);

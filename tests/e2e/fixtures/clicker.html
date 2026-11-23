@@ -1,0 +1,24 @@
+<!doctype html><html><body style="margin:0;height:900px">
+<button id="buy" style="position:absolute;left:40px;top:80px;width:160px;height:50px">Add to cart</button>
+<div id="count" style="position:absolute;left:40px;top:150px">0</div>
+<div id="err" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4)">
+  <button id="ok" style="position:absolute;left:300px;top:300px;width:120px;height:40px">OK</button>
+</div>
+<script>
+  let n = 0;
+  window.__untrusted = 0;
+  window.__ok = 0;
+  document.getElementById('buy').addEventListener('click', (e) => {
+    if (!e.isTrusted) window.__untrusted++;
+    n++;
+    document.getElementById('count').textContent = n;
+    if (n >= 6) location.href = '/next.html';
+    else if (n % 3 === 0) document.getElementById('err').style.display = 'block';
+  });
+  document.getElementById('ok').addEventListener('click', (e) => {
+    if (!e.isTrusted) window.__untrusted++;
+    window.__ok++;
+    document.getElementById('err').style.display = 'none';
+  });
+</script>
+</body></html>
