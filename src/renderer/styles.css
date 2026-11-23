@@ -28,7 +28,7 @@ input:focus { outline: none; border-color: var(--accent); }
 .seg button:last-child { border-radius: 0 6px 6px 0; border-left: none; }
 .seg button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
 #pager { display: flex; align-items: center; gap: 6px; }
-#pager[hidden], #tabstrip[hidden], #error[hidden], #attention[hidden], #empty[hidden] { display: none; }
+#pager[hidden], #tabstrip[hidden], #error[hidden], #attention[hidden], #through[hidden], #empty[hidden] { display: none; }
 #page-dots { display: flex; gap: 4px; }
 .dot { width: 10px; height: 10px; padding: 0; border-radius: 50%; background: var(--line); border: none; }
 .dot.on { background: var(--accent); }
@@ -63,3 +63,12 @@ input:focus { outline: none; border-color: var(--accent); }
   color: var(--dim); font-size: 11px; }
 .pane.attention .pane-head .url { color: #fff; }
 .pane webview { flex: 1; width: 100%; border: 0; }
+
+/* Got through to a new page */
+:root { --go: #22c55e; }
+.through-pill { background: var(--go); border-color: var(--go); color: #fff; font-weight: 600; }
+.dot.through:not(.attention) { background: var(--go); }
+.tab.through:not(.attention) { background: var(--go); border-color: var(--go); color: #fff; }
+.pane.through:not(.attention) { border-color: var(--go); box-shadow: 0 0 0 2px var(--go); }
+.pane.through:not(.attention) .pane-head { background: var(--go); }
+.pane.through:not(.attention) .pane-head .url { color: #fff; }

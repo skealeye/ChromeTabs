@@ -42,7 +42,7 @@
     webview.setAttribute('src', url);
     root.append(head, webview);
 
-    const pane = { el: root, webview, n, partition, ready: false, attention: false, urlText, max };
+    const pane = { el: root, webview, n, partition, ready: false, attention: false, through: false, baseUrl: null, regions: [], assisting: false, urlText, max };
     webview.addEventListener('dom-ready', () => { pane.ready = true; });
     const onNav = (e) => { urlText.textContent = e.url; urlText.title = e.url; };
     webview.addEventListener('did-navigate', onNav);
@@ -51,8 +51,9 @@
     reload.addEventListener('click', () => webview.reload());
     // Toggle: maximize into Tabs view, or go back to the grid page this pane is on.
     max.addEventListener('click', () => { setView(view === 'tabs' ? 'grid' : 'tabs'); selectPane(i); });
-    head.addEventListener('mousedown', () => { current = i; markCurrent(); });
-    webview.addEventListener('focus', () => { current = i; markCurrent(); });
+    const touch = () => { current = i; markCurrent(); if (window.CT.onSelect) window.CT.onSelect(pane); };
+    head.addEventListener('mousedown', touch);
+    webview.addEventListener('focus', touch);
     if (window.CT.onPaneCreated) window.CT.onPaneCreated(pane, i);
     return pane;
   }
@@ -146,6 +147,7 @@
       d.title = `Page ${k + 1}`;
       d.classList.toggle('on', k === page);
       d.classList.toggle('attention', panes.slice(k * PAGE_SIZE, (k + 1) * PAGE_SIZE).some((p) => p.attention));
+      d.classList.toggle('through', panes.slice(k * PAGE_SIZE, (k + 1) * PAGE_SIZE).some((p) => p.through));
       d.addEventListener('click', () => setPage(k));
       dots.append(d);
     }
@@ -159,6 +161,7 @@
       const b = el('button', 'tab', String(p.n));
       b.classList.toggle('on', i === current);
       b.classList.toggle('attention', p.attention);
+      b.classList.toggle('through', p.through);
       b.addEventListener('click', () => selectPane(i));
       return b;
     }));
@@ -184,6 +187,7 @@
     page = pageOf(i);
     layout();
     panes[i].webview.focus();
+    if (window.CT.onSelect) window.CT.onSelect(panes[i]);
   }
 
   function handleHotkey(key) {
@@ -205,6 +209,7 @@
     onPaneCreated: null,
     onPanesChanged: null,
     onF2: null,
+    onSelect: null,
   };
 
   document.title = `ChromeTabs v${window.app.version}`;
