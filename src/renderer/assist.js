@@ -38,14 +38,18 @@
 
   // From settings.json (startup or an edit while running). Doesn't write back.
   let settingsError = '';
+  let appliedSettings = {};
   function applySettings({ settings, error }) {
     settingsError = error || '';
     if (document.activeElement !== msBox) {
       msBox.value = String(settings.clickIntervalMs);
       msBox.dataset.saved = msBox.value;
     }
-    jitterPercent = settings.jitterPercent;
-    maxRunMs = settings.maxRunMinutes * 60000;
+    // Only apply values that changed in the file. The watcher also echoes our own saves
+    // (e.g. the ms box) some time later, which mustn't undo setMaxRunMs/setJitterPercent.
+    if (settings.jitterPercent !== appliedSettings.jitterPercent) jitterPercent = settings.jitterPercent;
+    if (settings.maxRunMinutes !== appliedSettings.maxRunMinutes) maxRunMs = settings.maxRunMinutes * 60000;
+    appliedSettings = { ...settings };
     refresh();
   }
 

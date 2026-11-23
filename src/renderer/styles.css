@@ -59,6 +59,7 @@ input:focus { outline: none; border-color: var(--accent); }
 .pane-head .icon { padding: 0 5px; height: 18px; line-height: 16px; font-size: 12px;
   background: transparent; border-color: transparent; }
 .pane-head .icon:hover { border-color: var(--line); }
+.pane-head .icon.close:hover { background: var(--alert); color: #fff; }
 .pane-head .url { flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
   color: var(--dim); font-size: 11px; }
 .pane.attention .pane-head .url { color: #fff; }
@@ -92,10 +93,15 @@ input:focus { outline: none; border-color: var(--accent); }
 .pane.assisting .pane-head::after { content: 'ASSISTING'; background: var(--go); color: #fff; font-size: 10px;
   font-weight: 700; padding: 1px 6px; border-radius: 4px; }
 
-/* Keep the top bar on one line */
-#bar button { white-space: nowrap; }
-#bar { flex-wrap: wrap; row-gap: 6px; }
-#url { flex: 1 1 260px; min-width: 160px; max-width: 520px; }
-/* Fixed width so status text changes never reflow the bar (that would move the regions). */
-#assist-status { width: 300px; flex: none; overflow: hidden; text-overflow: ellipsis; }
+/* Keep the top bar on ONE line, always. If it wrapped, any width change (a button label,
+   a pill appearing) could add or drop a row, resize the stage and move the click regions.
+   Instead the URL box and assist status shrink to make room. */
+#bar * { white-space: nowrap; }
+#bar button, #bar label, .brand, #pager, #pager > *, .seg { flex-shrink: 0; }
+#bar { flex-wrap: nowrap; height: 46px; min-width: 0; overflow: hidden; }
+#url { flex: 1 1 260px; min-width: 120px; max-width: 520px; }
+.assist { flex: 0 1 auto; min-width: 0; }
+/* Same width for "Auto-click" and "Stop", so starting never reflows the bar. */
+#assist-toggle { width: 7.5em; text-align: center; }
+#assist-status { width: 300px; flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .ms { white-space: nowrap; }

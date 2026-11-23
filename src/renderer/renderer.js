@@ -10,6 +10,7 @@
   let page = 0;
   let current = 0;
   let openId = 0;
+  let nextN = 0; // session numbers keep counting up within an Open, even after closes
   // Unique per app-page load, so a reload can never hand out an old session.
   const launchId = crypto.randomUUID().slice(0, 8);
 
@@ -20,8 +21,8 @@
     return e;
   }
 
-  function createPane(i, url) {
-    const n = i + 1;
+  function createPane(url) {
+    const n = ++nextN;
     const partition = `pane-${launchId}-${openId}-${n}`;
     const root = el('div', 'pane');
     const head = el('div', 'pane-head');
@@ -33,7 +34,9 @@
     const urlText = el('span', 'url', url);
     const max = el('button', 'icon max', '⤢');
     max.title = 'Maximize';
-    head.append(num, back, reload, urlText, max);
+    const close = el('button', 'icon close', '×');
+    close.title = 'Close this session (Ctrl+W)';
+    head.append(num, back, reload, urlText, max, close);
 
     const webview = document.createElement('webview');
     webview.setAttribute('partition', partition);
@@ -50,36 +53,85 @@
     back.addEventListener('click', () => { if (webview.canGoBack()) webview.goBack(); });
     reload.addEventListener('click', () => webview.reload());
     // Toggle: maximize into Tabs view, or go back to the grid page this pane is on.
-    max.addEventListener('click', () => { setView(view === 'tabs' ? 'grid' : 'tabs'); selectPane(i); });
-    head.addEventListener('mousedown', () => { current = i; markCurrent(); if (window.CT.onSelect) window.CT.onSelect(pane); });
+    // Panes can be closed, so look the index up each time rather than capturing it.
+    max.addEventListener('click', () => { setView(view === 'tabs' ? 'grid' : 'tabs'); selectPane(panes.indexOf(pane)); });
+    close.addEventListener('click', (e) => { e.stopPropagation(); closePane(pane); });
+    head.addEventListener('mousedown', (e) => {
+      if (e.target === close || !panes.includes(pane)) return;
+      current = panes.indexOf(pane); markCurrent(); if (window.CT.onSelect) window.CT.onSelect(pane);
+    });
     webview.addEventListener('focus', () => {
-      current = i;
+      if (!panes.includes(pane)) return;
+      current = panes.indexOf(pane);
       markCurrent();
     });
-    if (window.CT.onPaneCreated) window.CT.onPaneCreated(pane, i);
+    if (window.CT.onPaneCreated) window.CT.onPaneCreated(pane);
     return pane;
   }
 
-  function openAll() {
+  // Reads the URL and count boxes; returns null (after showing why) if they won't do.
+  function readForm(keep) {
     const url = normalizeUrl($('url').value);
-    if (!url) { $('error').hidden = false; return; }
+    if (!url) { $('error').hidden = false; return null; }
     $('error').hidden = true;
     $('url').value = url;
     const count = clampCount($('count').value);
     $('count').value = String(count);
-    if (count > WARN_COUNT && !confirm(
-      `Open ${count} sessions?
+    const total = keep + count;
+    if (total > WARN_COUNT && !confirm(
+      `This will make ${total} sessions.
 
 Each session is a live browser using roughly 100–200 MB of RAM, ` +
-      `so ${count} could use about ${Math.round(count * 0.1)}–${Math.round(count * 0.2)} GB and slow or freeze your PC.`)) return;
-    closeAll();
-    openId += 1;
+      `so ${total} could use about ${Math.round(total * 0.1)}–${Math.round(total * 0.2)} GB and slow or freeze your PC.
+
+Continue?`)) return null;
+    return { url, count };
+  }
+
+  function addPanes(url, count) {
     for (let i = 0; i < count; i++) {
-      const p = createPane(i, url);
+      const p = createPane(url);
       panes.push(p);
       stage.append(p.el);
     }
     layout();
+    if (window.CT.onPanesChanged) window.CT.onPanesChanged();
+  }
+
+  // Open replaces the current set with fresh sessions.
+  function openAll() {
+    const f = readForm(0);
+    if (!f) return;
+    closeAll();
+    openId += 1;
+    nextN = 0;
+    addPanes(f.url, f.count);
+  }
+
+  // Add keeps the current sessions and appends more.
+  function addMore() {
+    const f = readForm(panes.length);
+    if (!f) return;
+    if (!panes.length) { openId += 1; nextN = 0; }
+    const firstNew = panes.length;
+    addPanes(f.url, f.count);
+    if (view === 'grid') setPage(pageOf(firstNew));
+  }
+
+  function closePane(pane) {
+    const i = panes.indexOf(pane);
+    if (i < 0) return;
+    if (pane.assisting && window.CT.assist) window.CT.assist.stop('stopped (session closed)');
+    pane.el.remove();
+    window.app.dropPartition(pane.partition);
+    panes.splice(i, 1);
+    if (i < current || current >= panes.length) current = Math.max(0, current - 1);
+    layout();
+    if (window.CT.onPanesChanged) window.CT.onPanesChanged();
+    if (panes[current]) {
+      if (view === 'tabs') panes[current].webview.focus();
+      if (window.CT.onSelect && view === 'tabs') window.CT.onSelect(panes[current]);
+    }
   }
 
   function closeAll() {
@@ -169,7 +221,9 @@ Each session is a live browser using roughly 100–200 MB of RAM, ` +
       b.classList.toggle('on', i === current);
       b.classList.toggle('attention', p.attention);
       b.classList.toggle('through', p.through);
+      b.title = 'Middle-click to close';
       b.addEventListener('click', () => selectPane(i));
+      b.addEventListener('auxclick', (e) => { if (e.button === 1) { e.preventDefault(); closePane(p); } });
       return b;
     }));
   }
@@ -205,12 +259,13 @@ Each session is a live browser using roughly 100–200 MB of RAM, ` +
     if (key === 'ctrl+tab') return selectPane((current + 1) % panes.length);
     if (key === 'ctrl+shift+tab') return selectPane((current - 1 + panes.length) % panes.length);
     if (key === 'f2' && window.CT.onF2) return window.CT.onF2();
+    if (key === 'ctrl+w') return closePane(panes[current]);
     if (window.CT.onKey) return window.CT.onKey(key);
   }
 
   window.CT = {
     get panes() { return panes; },
-    selectPane, setView, setPage, layout, renderPager, renderTabstrip,
+    selectPane, closePane, setView, setPage, layout, renderPager, renderTabstrip,
     currentPane: () => current,
     currentPage: () => page,
     view: () => view,
@@ -224,6 +279,7 @@ Each session is a live browser using roughly 100–200 MB of RAM, ` +
 
   document.title = `ChromeTabs v${window.app.version}`;
   $('open').addEventListener('click', openAll);
+  $('add').addEventListener('click', addMore);
   $('url').addEventListener('keydown', (e) => { if (e.key === 'Enter') openAll(); });
   $('count').addEventListener('keydown', (e) => { if (e.key === 'Enter') openAll(); });
   $('reload-all').addEventListener('click', reloadAll);
@@ -245,6 +301,7 @@ Each session is a live browser using roughly 100–200 MB of RAM, ` +
     }
     let key = null;
     if (e.ctrlKey && /^[1-9]$/.test(e.key)) key = 'ctrl+' + e.key;
+    else if (e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === 'w') key = 'ctrl+w';
     else if (e.ctrlKey && e.key === 'Tab') key = e.shiftKey ? 'ctrl+shift+tab' : 'ctrl+tab';
     else if (e.key === 'F2') key = 'f2';
     else if (e.key === 'F3') key = 'f3';

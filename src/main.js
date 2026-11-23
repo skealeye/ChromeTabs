@@ -27,6 +27,7 @@ function paneHotkey(input) {
   if (input.type !== 'keyDown') return null;
   const k = input.key;
   if (input.control && !input.alt && /^[1-9]$/.test(k)) return 'ctrl+' + k;
+  if (input.control && !input.shift && !input.alt && k.toLowerCase() === 'w') return 'ctrl+w';
   if (input.control && k === 'Tab') return input.shift ? 'ctrl+shift+tab' : 'ctrl+tab';
   if (k === 'F2') return 'f2';
   if ((k === 'F3' || k === 'F4') && input.isAutoRepeat) return 'repeat';

@@ -13,8 +13,12 @@ npm install
 npm start
 ```
 
-Enter an address and how many sessions you want (over 100 asks you to confirm first), then press **Open**. Pressing Open again
-replaces the current set with fresh sessions.
+Enter an address and how many sessions you want, then press **Open**. Pressing Open again
+replaces the current set with fresh sessions. To keep the ones you have and add more, press **+ Add**
+instead: with 20 open and 20 in the box, Add gives you 40. Going over 100 sessions asks you to confirm first.
+
+To close one session, press its **×**, middle-click its number in the Tabs strip, or press Ctrl+W.
+**Close all** closes everything.
 
 ## Views
 
@@ -28,6 +32,7 @@ replaces the current set with fresh sessions.
 | Ctrl+1 … Ctrl+9 | Go to session 1–9 |
 | Ctrl+Tab / Ctrl+Shift+Tab | Next / previous session |
 | PgDn / PgUp | Next / previous grid page (when the top bar has focus) |
+| Ctrl+W | Close the current session |
 | F2 | Jump to the next captcha, then the next session that got through |
 | F3 | Draw a click region |
 | F4 | Start / stop auto-click |
