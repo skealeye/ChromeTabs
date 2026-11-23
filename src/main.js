@@ -1,6 +1,8 @@
 const { app, BrowserWindow, ipcMain, Menu, session } = require('electron');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
+const fs = require('node:fs');
+const { normalizeSettings, DEFAULT_SETTINGS } = require('./lib/settings');
 
 // Look like plain Chrome: drop the Electron and app tokens from the UA.
 const CLEAN_UA = app.userAgentFallback
@@ -86,6 +88,31 @@ app.on('web-contents-created', (_e, contents) => {
       win.webContents.send('hotkey', key);
     }
   });
+});
+
+// settings.json lives next to ChromeTabs.bat. Edits are picked up while the app runs.
+const SETTINGS_PATH = process.env.CHROMETABS_SETTINGS || path.join(__dirname, '..', 'settings.json');
+
+function readSettings() {
+  try {
+    if (!fs.existsSync(SETTINGS_PATH)) {
+      fs.writeFileSync(SETTINGS_PATH, `${JSON.stringify(DEFAULT_SETTINGS, null, 2)}\n`);
+    }
+    return { settings: normalizeSettings(JSON.parse(fs.readFileSync(SETTINGS_PATH, 'utf8'))), error: null };
+  } catch (err) {
+    return { settings: { ...DEFAULT_SETTINGS }, error: `settings.json has an error, using defaults (${err.message})` };
+  }
+}
+
+ipcMain.on('get-settings', (e) => { e.returnValue = { ...readSettings(), path: SETTINGS_PATH }; });
+ipcMain.on('save-settings', (_e, partial) => {
+  const current = readSettings();
+  if (current.error) return; // never overwrite a file the user is mid-edit on
+  const next = normalizeSettings({ ...current.settings, ...partial });
+  fs.writeFileSync(SETTINGS_PATH, `${JSON.stringify(next, null, 2)}\n`);
+});
+fs.watchFile(SETTINGS_PATH, { interval: 500 }, () => {
+  if (win) win.webContents.send('settings', readSettings());
 });
 
 ipcMain.on('get-info', (e) => {

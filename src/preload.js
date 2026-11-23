@@ -9,5 +9,8 @@ contextBridge.exposeInMainWorld('app', {
   flash: () => ipcRenderer.send('flash-frame'),
   setAssisting: (on) => ipcRenderer.send('assist-state', Boolean(on)),
   dropPartition: (p) => ipcRenderer.send('drop-partition', p),
+  getSettings: () => ipcRenderer.sendSync('get-settings'),
+  saveSettings: (partial) => ipcRenderer.send('save-settings', partial),
+  onSettings: (cb) => ipcRenderer.on('settings', (_e, s) => cb(s)),
   onHotkey: (cb) => ipcRenderer.on('hotkey', (_e, key) => cb(key)),
 });

@@ -28,7 +28,47 @@ replaces the current set with fresh sessions.
 | Ctrl+1 … Ctrl+9 | Go to session 1–9 |
 | Ctrl+Tab / Ctrl+Shift+Tab | Next / previous session |
 | PgDn / PgUp | Next / previous grid page (when the top bar has focus) |
-| F2 | Jump to the next session showing a captcha |
+| F2 | Jump to the next captcha, then the next session that got through |
+| F3 | Draw a click region |
+| F4 | Start / stop auto-click |
+| Esc | Stop auto-click, or cancel drawing |
+
+## Click assist
+
+For people who can't click over and over. It clicks for you, at a human pace, in one session.
+
+1. Go to the session (Tabs view is easiest) and press **✚ Region** (F3). Drag a box over the button.
+   Draw up to 3 regions, for example "Add to cart" plus where an error popup's OK button appears.
+2. Set the time between clicks in the **ms** box (150–5000).
+3. Press **▶ Auto-click** (F4). Clicks cycle through your regions at a random spot inside each one.
+4. It stops on its own when the session moves to a new page. The session turns green, dings, and
+   comes to the front so you can check out. It also stops on F4, Esc, ■ Stop, Close all, or after the time limit.
+
+Clicks are tied to the page position you drew on. If you switch views or resize, redraw the regions.
+
+### settings.json
+
+`settings.json` sits next to `ChromeTabs.bat` and is created on first run. Edit it while the app is
+running and the changes apply within a second. Changing the ms box saves back to it.
+
+```json
+{
+  "clickIntervalMs": 200,
+  "jitterPercent": 20,
+  "maxRunMinutes": 10
+}
+```
+
+| Setting | Range | Meaning |
+|---------|-------|---------|
+| `clickIntervalMs` | 150–5000 | Time between clicks |
+| `jitterPercent` | 0–50 | Random extra time added to each gap (never faster than `clickIntervalMs`) |
+| `maxRunMinutes` | 1–60 | Safety stop |
+
+## Through alert
+
+Any session that moves to a new page on its own (for example, out of a waiting room) turns green,
+dings, and shows in the "N through" counter. F2 jumps to it. Looking at it clears the flag.
 
 ## Captchas
 

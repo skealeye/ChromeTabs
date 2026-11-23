@@ -23,9 +23,28 @@
   const currentPane = () => CT.panes[CT.currentPane()] || null;
   const running = () => runPane !== null;
 
+  // From the user typing in the ms box: clamp and save to settings.json.
   function setMs(v) {
-    msBox.value = String(clampInterval(v));
-    if (CT.assist.onMsChanged) CT.assist.onMsChanged(Number(msBox.value));
+    const ms = clampInterval(v);
+    const changed = String(ms) !== msBox.dataset.saved;
+    msBox.value = String(ms);
+    if (changed) {
+      msBox.dataset.saved = String(ms);
+      window.app.saveSettings({ clickIntervalMs: ms });
+    }
+  }
+
+  // From settings.json (startup or an edit while running). Doesn't write back.
+  let settingsError = '';
+  function applySettings({ settings, error }) {
+    settingsError = error || '';
+    if (document.activeElement !== msBox) {
+      msBox.value = String(settings.clickIntervalMs);
+      msBox.dataset.saved = msBox.value;
+    }
+    jitterPercent = settings.jitterPercent;
+    maxRunMs = settings.maxRunMinutes * 60000;
+    refresh();
   }
 
   function renderRegions(pane) {
@@ -193,7 +212,7 @@
       status.textContent = `Assisting #${runPane.n} · ${clicks} clicks · ${fmt(Date.now() - startedAt)}`
         + (moved ? ' · layout changed, redraw regions?' : '');
     } else {
-      status.textContent = lastMessage;
+      status.textContent = settingsError || lastMessage;
     }
   }
 
@@ -212,7 +231,6 @@
     setMaxRunMs: (ms) => { maxRunMs = ms; },
     setJitterPercent: (p) => { jitterPercent = p; },
     setMs,
-    onMsChanged: null,
   };
   CT.onKey = onKey;
 
@@ -222,5 +240,6 @@
   msBox.addEventListener('change', () => setMs(msBox.value));
   msBox.addEventListener('blur', () => setMs(msBox.value));
   setInterval(refresh, 300);
-  refresh();
+  applySettings(window.app.getSettings());
+  window.app.onSettings(applySettings);
 })();

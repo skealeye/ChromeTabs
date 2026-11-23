@@ -21,8 +21,12 @@ function startServer() {
   }));
 }
 
-async function launchApp() {
-  const app = await _electron.launch({ args: ['.'], cwd: ROOT });
+const os = require('node:os');
+// Each test app gets its own settings file unless one is given.
+async function launchApp(env = {}) {
+  const settings = env.CHROMETABS_SETTINGS
+    || path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'ct-')), 'settings.json');
+  const app = await _electron.launch({ args: ['.'], cwd: ROOT, env: { ...process.env, ...env, CHROMETABS_SETTINGS: settings } });
   const page = await app.firstWindow();
   await page.waitForFunction(() => window.CT && window.CTLib);
   return { app, page };
