@@ -6,6 +6,8 @@ disappear when you close the app.
 
 ## Run
 
+Double-click **ChromeTabs.bat**. The first run installs dependencies. Or from a terminal:
+
 ```
 npm install
 npm start
