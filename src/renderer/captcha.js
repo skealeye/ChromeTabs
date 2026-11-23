@@ -1,6 +1,7 @@
 /* global CTLib */
 // Attention flags: captcha challenges (red) and sessions that got through to a new page (green).
-// Alerts, counters, and F2 to jump to them. It never solves captchas.
+// Alerts, counters, F2 to jump to them, and auto-advance to the next captcha once the
+// one on screen is solved. It never solves captchas.
 (() => {
   const { nextAttention, isThrough } = CTLib;
   const CT = window.CT;
@@ -37,6 +38,7 @@
 
   function setAttention(pane, on) {
     if (pane.attention === on || !CT.panes.includes(pane)) return;
+    const wasOnScreen = CT.panes[CT.currentPane()] === pane && pane.el.classList.contains('shown');
     pane.attention = on;
     pane.el.classList.toggle('attention', on);
     // Never click over a captcha: pause assist so the person can solve it.
@@ -47,6 +49,11 @@
     if (on && (!document.hasFocus() || !pane.el.classList.contains('shown'))) {
       ding();
       window.app.flash();
+    }
+    // Solved the captcha you were looking at: go straight to the next one, if any.
+    if (!on && wasOnScreen) {
+      const i = nextAttention(CT.panes.map((p) => p.attention), CT.panes.indexOf(pane));
+      if (i >= 0) { CT.setView('tabs'); CT.selectPane(i); }
     }
   }
 

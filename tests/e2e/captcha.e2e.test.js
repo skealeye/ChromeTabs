@@ -57,6 +57,37 @@ test('captcha on another grid page marks that page and F2 crosses pages', async 
   assert.strictEqual(await page.evaluate(() => window.CT.view()), 'tabs');
 });
 
+test('solving the captcha on screen auto-advances to the next one', async () => {
+  await openPanes(page, `${srv.base}/captcha.html`, 4);
+  await page.click('#view-tabs');
+  await show(1);
+  await show(3);
+  await page.waitForFunction(() => window.CT.panes.filter((p) => p.attention).length === 2, null, { timeout: 3000 });
+  await page.evaluate(() => window.CT.selectPane(1));
+
+  await hide(1);
+  await page.waitForFunction(() => window.CT.currentPane() === 3, null, { timeout: 3000 });
+
+  // Last one solved: nothing left, so it stays put.
+  await hide(3);
+  await page.waitForFunction(() => !window.CT.panes[3].attention, null, { timeout: 3000 });
+  await new Promise((r) => setTimeout(r, 300));
+  assert.strictEqual(await page.evaluate(() => window.CT.currentPane()), 3);
+});
+
+test('a captcha clearing off screen does not move you', async () => {
+  await openPanes(page, `${srv.base}/captcha.html`, 3);
+  await page.click('#view-tabs');
+  await show(1);
+  await show(2);
+  await page.waitForFunction(() => window.CT.panes.filter((p) => p.attention).length === 2, null, { timeout: 3000 });
+  await page.evaluate(() => window.CT.selectPane(0));
+  await hide(1);
+  await page.waitForFunction(() => !window.CT.panes[1].attention, null, { timeout: 3000 });
+  await new Promise((r) => setTimeout(r, 300));
+  assert.strictEqual(await page.evaluate(() => window.CT.currentPane()), 0);
+});
+
 test('re-open clears attention', async () => {
   await openPanes(page, `${srv.base}/captcha.html`, 2);
   assert.ok(!(await page.isVisible('#attention')));

@@ -1,6 +1,6 @@
 {
   "name": "chrometabs",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Open many isolated browser sessions of one URL in a single window",
   "main": "src/main.js",
   "private": true,

@@ -74,7 +74,8 @@ dings, and shows in the "N through" counter. F2 jumps to it. Looking at it clear
 
 When a session shows a reCAPTCHA (or hCaptcha) challenge, its border turns red and the top bar shows
 "N need attention". If you can't see that session, the app also dings and flashes in the taskbar.
-F2 takes you to each one in turn.
+F2 takes you to each one in turn. When you solve the captcha you're looking at, the app moves to the
+next one by itself.
 
 The app alerts you to captchas; it never solves them.
 
