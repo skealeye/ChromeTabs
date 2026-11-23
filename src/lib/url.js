@@ -1,7 +1,7 @@
 (function (root) {
   const DEFAULT_COUNT = 20;
   const MIN_COUNT = 1;
-  const MAX_COUNT = 100;
+  const WARN_COUNT = 100; // above this, ask before opening (each pane ~100-200 MB RAM)
 
   function normalizeUrl(input) {
     const raw = String(input == null ? '' : input).trim();
@@ -19,10 +19,10 @@
   function clampCount(input) {
     const n = parseInt(input, 10);
     if (Number.isNaN(n)) return DEFAULT_COUNT;
-    return Math.min(MAX_COUNT, Math.max(MIN_COUNT, n));
+    return Math.max(MIN_COUNT, n);
   }
 
-  const api = { normalizeUrl, clampCount, DEFAULT_COUNT, MIN_COUNT, MAX_COUNT };
+  const api = { normalizeUrl, clampCount, DEFAULT_COUNT, MIN_COUNT, WARN_COUNT };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.CTLib = Object.assign(root.CTLib || {}, api);
 })(this);

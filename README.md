@@ -13,7 +13,7 @@ npm install
 npm start
 ```
 
-Enter an address and how many sessions you want (1–100), then press **Open**. Pressing Open again
+Enter an address and how many sessions you want (over 100 asks you to confirm first), then press **Open**. Pressing Open again
 replaces the current set with fresh sessions.
 
 ## Views

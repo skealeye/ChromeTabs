@@ -1,6 +1,6 @@
 /* global CTLib */
 (() => {
-  const { normalizeUrl, clampCount, gridDims, pageCount, pageOf, PAGE_SIZE, staggerDelays } = CTLib;
+  const { normalizeUrl, clampCount, WARN_COUNT, gridDims, pageCount, pageOf, PAGE_SIZE, staggerDelays } = CTLib;
   const $ = (id) => document.getElementById(id);
   const stage = $('stage');
   const GAP = 4;
@@ -67,6 +67,11 @@
     $('url').value = url;
     const count = clampCount($('count').value);
     $('count').value = String(count);
+    if (count > WARN_COUNT && !confirm(
+      `Open ${count} sessions?
+
+Each session is a live browser using roughly 100–200 MB of RAM, ` +
+      `so ${count} could use about ${Math.round(count * 0.1)}–${Math.round(count * 0.2)} GB and slow or freeze your PC.`)) return;
     closeAll();
     openId += 1;
     for (let i = 0; i < count; i++) {

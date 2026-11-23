@@ -16,7 +16,7 @@ test('clampCount', () => {
   assert.strictEqual(clampCount(''), 20);
   assert.strictEqual(clampCount('0'), 1);
   assert.strictEqual(clampCount('99'), 99);
-  assert.strictEqual(clampCount('500'), 100);
+  assert.strictEqual(clampCount('500'), 500);
   assert.strictEqual(clampCount('abc'), 20);
   assert.strictEqual(clampCount(5), 5);
 });
