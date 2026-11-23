@@ -19,6 +19,7 @@ after(async () => {
 const isThrough = (i) => page.evaluate((i) => window.CT.panes[i].el.classList.contains('through'), i);
 
 test('a hidden session that moves to a new page is flagged through', async () => {
+  await page.evaluate(() => { window.CT.throughSettleMs = 0; });
   await openPanes(page, `${srv.base}/session.html`, 3);
   await page.click('#view-tabs');
   await page.evaluate(() => window.CT.selectPane(0));

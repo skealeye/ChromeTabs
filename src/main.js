@@ -29,9 +29,10 @@ function paneHotkey(input) {
   if (input.control && !input.alt && /^[1-9]$/.test(k)) return 'ctrl+' + k;
   if (input.control && k === 'Tab') return input.shift ? 'ctrl+shift+tab' : 'ctrl+tab';
   if (k === 'F2') return 'f2';
+  if ((k === 'F3' || k === 'F4') && input.isAutoRepeat) return 'repeat';
   if (k === 'F3') return 'f3';
   if (k === 'F4') return 'f4';
-  // Esc only stops click assist while it runs; otherwise pages keep their Esc.
+  // Esc only stops click assist / drawing while active; otherwise pages keep their Esc.
   if (k === 'Escape' && assisting) return 'escape';
   return null;
 }

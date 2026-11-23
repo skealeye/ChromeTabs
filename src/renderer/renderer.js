@@ -52,7 +52,10 @@
     // Toggle: maximize into Tabs view, or go back to the grid page this pane is on.
     max.addEventListener('click', () => { setView(view === 'tabs' ? 'grid' : 'tabs'); selectPane(i); });
     head.addEventListener('mousedown', () => { current = i; markCurrent(); if (window.CT.onSelect) window.CT.onSelect(pane); });
-    webview.addEventListener('focus', () => { current = i; markCurrent(); });
+    webview.addEventListener('focus', () => {
+      current = i;
+      markCurrent();
+    });
     if (window.CT.onPaneCreated) window.CT.onPaneCreated(pane, i);
     return pane;
   }
@@ -229,6 +232,7 @@
   // Keys pressed in the app chrome. Keys pressed inside a pane arrive via main.
   // PgUp/PgDn only page the grid from the chrome, so pages can still scroll.
   document.addEventListener('keydown', (e) => {
+    if (e.repeat && (e.key === 'F3' || e.key === 'F4')) { e.preventDefault(); return; }
     if (view === 'grid' && !e.ctrlKey && !e.altKey && (e.key === 'PageDown' || e.key === 'PageUp')) {
       e.preventDefault();
       setPage(page + (e.key === 'PageDown' ? 1 : -1));

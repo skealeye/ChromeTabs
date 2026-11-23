@@ -40,6 +40,9 @@ function schedule() {
   setTimeout(() => { pending = false; check(); }, 200);
 }
 
+// Tell the app when the person clicks inside this session (acknowledges its flags).
+window.addEventListener('mousedown', (e) => { if (e.isTrusted) ipcRenderer.sendToHost('touch'); }, true);
+
 window.addEventListener('DOMContentLoaded', () => {
   check();
   new MutationObserver(schedule).observe(document.documentElement, {

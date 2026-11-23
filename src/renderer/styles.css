@@ -96,5 +96,6 @@ input:focus { outline: none; border-color: var(--accent); }
 #bar button { white-space: nowrap; }
 #bar { flex-wrap: wrap; row-gap: 6px; }
 #url { flex: 1 1 260px; min-width: 160px; max-width: 520px; }
-#assist-status { max-width: 300px; overflow: hidden; text-overflow: ellipsis; }
+/* Fixed width so status text changes never reflow the bar (that would move the regions). */
+#assist-status { width: 300px; flex: none; overflow: hidden; text-overflow: ellipsis; }
 .ms { white-space: nowrap; }

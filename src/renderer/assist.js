@@ -2,7 +2,7 @@
 // Click assist: repeatedly clicks user-drawn regions in ONE session at a human pace
 // (>= 150 ms), for people who can't click over and over. It stops when the page moves on.
 (() => {
-  const { clampInterval, nextDelay, randomPoint, isThrough, MAX_REGIONS, MAX_RUN_MS } = CTLib;
+  const { clampInterval, nextDelay, randomPoint, isThrough, MAX_REGIONS, MAX_RUN_MS, MIN_MS } = CTLib;
   const CT = window.CT;
   const $ = (id) => document.getElementById(id);
   const toggle = $('assist-toggle');
@@ -19,6 +19,8 @@
   let jitterPercent = 20;
   let lastMessage = '';
   let onNav = null;
+  // Survives stop/start, so toggling fast can never beat the floor.
+  let lastClickAt = 0;
 
   const currentPane = () => CT.panes[CT.currentPane()] || null;
   const running = () => runPane !== null;
@@ -73,7 +75,8 @@
     pane.regions.push(r);
     while (pane.regions.length > MAX_REGIONS) pane.regions.shift();
     const box = pane.webview.getBoundingClientRect();
-    pane.regionSize = { w: Math.round(box.width), h: Math.round(box.height) };
+    r.vw = Math.round(box.width);
+    r.vh = Math.round(box.height);
     renderRegions(pane);
     refresh();
   }
@@ -92,6 +95,7 @@
   function cancelDraw() {
     if (drawLayer) drawLayer.remove();
     drawLayer = null;
+    window.app.setAssisting(running());
   }
   function startDraw() {
     const pane = currentPane();
@@ -127,6 +131,7 @@
       if (r.w >= 6 && r.h >= 6) addRegion(CT.panes.indexOf(pane), r);
     });
     pane.el.append(drawLayer);
+    window.app.setAssisting(true); // lets Esc inside the session cancel drawing
   }
 
   function click(pane, region) {
@@ -135,6 +140,7 @@
     wv.sendInputEvent({ type: 'mouseMove', x, y });
     wv.sendInputEvent({ type: 'mouseDown', x, y, button: 'left', clickCount: 1 });
     wv.sendInputEvent({ type: 'mouseUp', x, y, button: 'left', clickCount: 1 });
+    lastClickAt = Date.now();
     clicks += 1;
   }
 
@@ -144,6 +150,8 @@
     if (!CT.panes.includes(runPane)) return stop('stopped (session closed)');
     if (Date.now() - startedAt >= maxRunMs) return stop(`stopped after ${Math.round(maxRunMs / 60000) || '<1'} min limit`);
     if (!runPane.regions.length) return stop('stopped (no regions)');
+    if (runPane.attention) return stop('paused: captcha. Solve it, then press F4');
+    if (layoutMoved(runPane)) return stop('paused: layout changed. Redraw regions');
     try {
       click(runPane, runPane.regions[next % runPane.regions.length]);
     } catch { /* pane mid-navigation */ }
@@ -151,9 +159,18 @@
     timer = setTimeout(tick, nextDelay(clampInterval(msBox.value), Math.random, jitterPercent));
   }
 
+  // Regions are in webview px; if the session was resized the page reflowed under them.
+  function layoutMoved(pane) {
+    const box = pane.webview.getBoundingClientRect();
+    return pane.regions.some((r) => Math.abs(box.width - r.vw) > 2 || Math.abs(box.height - r.vh) > 2);
+  }
+
   function start() {
     const pane = currentPane();
     if (!pane || !pane.regions.length || running()) return;
+    if (pane.attention) { lastMessage = 'Solve the captcha first'; return refresh(); }
+    if (!/^https?:/i.test(pane.webview.getURL() || '')) { lastMessage = 'Wait for the page to load'; return refresh(); }
+    if (layoutMoved(pane)) { lastMessage = 'Layout changed since drawing. Redraw regions'; return refresh(); }
     runPane = pane;
     pane.assisting = true;
     pane.el.classList.add('assisting');
@@ -162,10 +179,11 @@
     clicks = 0;
     next = 0;
     lastMessage = '';
-    onNav = (e) => { if (isThrough(startUrl, e.url)) stop('through'); };
+    onNav = (e) => { if (e.isMainFrame !== false && isThrough(startUrl, e.url)) stop('through'); };
     pane.webview.addEventListener('did-navigate', onNav);
+    pane.webview.addEventListener('did-navigate-in-page', onNav);
     window.app.setAssisting(true);
-    tick();
+    timer = setTimeout(tick, Math.max(0, MIN_MS - (Date.now() - lastClickAt)));
     refresh();
   }
 
@@ -178,6 +196,7 @@
     pane.assisting = false;
     pane.el.classList.remove('assisting');
     pane.webview.removeEventListener('did-navigate', onNav);
+    pane.webview.removeEventListener('did-navigate-in-page', onNav);
     onNav = null;
     window.app.setAssisting(false);
     lastMessage = reason === 'through'
@@ -189,6 +208,7 @@
       CT.selectPane(CT.panes.indexOf(pane));
       CT.setThrough(pane, false);
       CT.setThrough(pane, true);
+      pane.surfacedAt = Date.now(); // late clicks from the old page shouldn't clear the flag
     }
     refresh();
   }
@@ -206,11 +226,8 @@
     $('clear-regions').disabled = !(pane && pane.regions.length);
     $('draw').disabled = !pane;
     if (running()) {
-      const box = runPane.webview.getBoundingClientRect();
-      const moved = runPane.regionSize
-        && (Math.abs(box.width - runPane.regionSize.w) > 2 || Math.abs(box.height - runPane.regionSize.h) > 2);
-      status.textContent = `Assisting #${runPane.n} · ${clicks} clicks · ${fmt(Date.now() - startedAt)}`
-        + (moved ? ' · layout changed, redraw regions?' : '');
+      if (layoutMoved(runPane)) return stop('paused: layout changed. Redraw regions');
+      status.textContent = `Assisting #${runPane.n} · ${clicks} clicks · ${fmt(Date.now() - startedAt)}`;
     } else {
       status.textContent = settingsError || lastMessage;
     }

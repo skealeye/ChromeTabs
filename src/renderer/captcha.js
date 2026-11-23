@@ -39,6 +39,8 @@
     if (pane.attention === on || !CT.panes.includes(pane)) return;
     pane.attention = on;
     pane.el.classList.toggle('attention', on);
+    // Never click over a captcha: pause assist so the person can solve it.
+    if (on && pane.assisting && CT.assist) CT.assist.stop('paused: captcha. Solve it, then press F4');
     updateCounter();
     CT.renderPager();
     CT.renderTabstrip();
@@ -64,8 +66,13 @@
   }
 
   function onNavigate(pane, url) {
+    const now = Date.now();
+    const settling = now - (pane.lastNavAt || 0) < CT.throughSettleMs;
+    pane.lastNavAt = now;
     if (!pane.baseUrl) { pane.baseUrl = url; return; }
     if (!isThrough(pane.baseUrl, url)) return;
+    // Redirects right after loading (e.g. into a waiting room) set the baseline, not a flag.
+    if (settling && !pane.assisting) { pane.baseUrl = url; return; }
     // The session you're looking at moving on is your own doing; just re-baseline.
     if (isWatching(pane) && !pane.assisting) { pane.baseUrl = url; return; }
     pane.baseUrl = url;
@@ -83,12 +90,17 @@
   CT.onPaneCreated = (pane) => {
     pane.webview.addEventListener('ipc-message', (e) => {
       if (e.channel === 'captcha') setAttention(pane, Boolean(e.args[0]));
+      // A click inside the session acknowledges it, but not assist's own clicks, and
+      // not for a moment after assist brought it forward (late clicks from the old page).
+      if (e.channel === 'touch' && !pane.assisting && Date.now() - (pane.surfacedAt || 0) > 1500) setThrough(pane, false);
     });
     pane.webview.addEventListener('did-navigate', (e) => onNavigate(pane, e.url));
+    pane.webview.addEventListener('did-navigate-in-page', (e) => { if (e.isMainFrame) onNavigate(pane, e.url); });
   };
   // Looking at a session acknowledges its through flag.
   CT.onSelect = (pane) => setThrough(pane, false);
   CT.setThrough = setThrough;
+  CT.throughSettleMs = 8000;
   CT.onPanesChanged = updateCounter;
   CT.onF2 = jumpToNext;
   counter.addEventListener('click', jumpToNext);

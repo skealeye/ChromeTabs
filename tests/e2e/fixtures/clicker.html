@@ -8,6 +8,8 @@
   let n = 0;
   window.__untrusted = 0;
   window.__ok = 0;
+  window.__times = [];
+  document.addEventListener('mousedown', (e) => { if (e.isTrusted) window.__times.push(performance.now()); }, true);
   document.getElementById('buy').addEventListener('click', (e) => {
     if (!e.isTrusted) window.__untrusted++;
     n++;
