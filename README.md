@@ -31,6 +31,7 @@ To close one session, press its **×**, middle-click its number in the Tabs stri
 |-----|------|
 | Ctrl+1 … Ctrl+9 | Go to session 1–9 |
 | Ctrl+Tab / Ctrl+Shift+Tab | Next / previous session |
+| → / ← | Next / previous session in Tabs view, wrapping around (not while typing in a field) |
 | PgDn / PgUp | Next / previous grid page (when the top bar has focus) |
 | Ctrl+W | Close the current session |
 | F2 | Jump to the next captcha, then the next session that got through |

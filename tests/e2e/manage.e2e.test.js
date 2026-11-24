@@ -63,3 +63,36 @@ test('Ctrl+W from inside a session and middle-click on a tab close sessions', as
   assert.deepStrictEqual(await nums(), [1, 2]);
   assert.ok(await inPane(page, 1, 'document.readyState === "complete"'));
 });
+
+test('in Tabs view, Left/Right arrows step through sessions with wrap-around', async () => {
+  await openPanes(page, `${srv.base}/session.html`, 3);
+  await page.click('#view-tabs');
+  await page.evaluate(() => window.CT.selectPane(2));
+  const key = (k) => page.evaluate(([k]) => {
+    const wv = window.CT.panes[window.CT.currentPane()].webview;
+    wv.sendInputEvent({ type: 'keyDown', keyCode: k });
+    wv.sendInputEvent({ type: 'keyUp', keyCode: k });
+  }, [k]);
+  const cur = () => page.evaluate(() => window.CT.currentPane());
+
+  await key('Right'); // from inside the session
+  await page.waitForFunction(() => window.CT.currentPane() === 0, null, { timeout: 3000 });
+  await key('Left');
+  await page.waitForFunction(() => window.CT.currentPane() === 2, null, { timeout: 3000 });
+
+  // From the app chrome (tab strip focused).
+  await page.locator('#tabstrip .tab').nth(1).focus();
+  await page.keyboard.press('ArrowRight');
+  assert.strictEqual(await cur(), 0); // 3 of 3 wraps to 1
+
+  // Typing in a field inside the page keeps its arrows.
+  await inPane(page, 0, "(() => { const i = document.createElement('input'); i.id = 'ti'; document.body.append(i); i.focus(); })()");
+  await key('Left');
+  await new Promise((r) => setTimeout(r, 300));
+  assert.strictEqual(await cur(), 0);
+
+  // Grid view ignores arrows.
+  await page.click('#view-grid');
+  await page.keyboard.press('ArrowRight');
+  assert.strictEqual(await cur(), 0);
+});

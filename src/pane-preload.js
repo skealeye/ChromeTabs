@@ -43,6 +43,21 @@ function schedule() {
 // Tell the app when the person clicks inside this session (acknowledges its flags).
 window.addEventListener('mousedown', (e) => { if (e.isTrusted) ipcRenderer.sendToHost('touch'); }, true);
 
+// Left/Right arrows: offer them to the app (Tabs view uses them to switch sessions),
+// unless you're typing in a field or the page itself already used the key.
+function isEditable(el) {
+  if (!el) return false;
+  if (el.isContentEditable) return true;
+  const tag = el.tagName;
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+}
+window.addEventListener('keydown', (e) => {
+  if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+  if (e.defaultPrevented || e.ctrlKey || e.altKey || e.metaKey || e.shiftKey) return;
+  if (isEditable(document.activeElement)) return;
+  ipcRenderer.sendToHost('arrow', e.key === 'ArrowRight' ? 1 : -1);
+});
+
 window.addEventListener('DOMContentLoaded', () => {
   check();
   new MutationObserver(schedule).observe(document.documentElement, {

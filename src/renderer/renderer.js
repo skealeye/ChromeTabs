@@ -65,6 +65,7 @@
       current = panes.indexOf(pane);
       markCurrent();
     });
+    webview.addEventListener('ipc-message', (e) => { if (e.channel === 'arrow') stepTab(e.args[0]); });
     if (window.CT.onPaneCreated) window.CT.onPaneCreated(pane);
     return pane;
   }
@@ -251,6 +252,12 @@ Continue?`)) return null;
     if (window.CT.onSelect) window.CT.onSelect(panes[i]);
   }
 
+  // Tabs view: step to the next/previous session, wrapping around.
+  function stepTab(dir) {
+    if (view !== 'tabs' || !panes.length) return;
+    selectPane((current + dir + panes.length) % panes.length);
+  }
+
   function handleHotkey(key) {
     if (!panes.length) return;
     if (key === 'f3' || key === 'f4' || key === 'escape') return window.CT.onKey && window.CT.onKey(key);
@@ -297,6 +304,13 @@ Continue?`)) return null;
     if (view === 'grid' && !e.ctrlKey && !e.altKey && (e.key === 'PageDown' || e.key === 'PageUp')) {
       e.preventDefault();
       setPage(page + (e.key === 'PageDown' ? 1 : -1));
+      return;
+    }
+    if (view === 'tabs' && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')
+        && !e.ctrlKey && !e.altKey && !e.shiftKey && !e.metaKey
+        && !/^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || '')) {
+      e.preventDefault();
+      stepTab(e.key === 'ArrowRight' ? 1 : -1);
       return;
     }
     let key = null;
